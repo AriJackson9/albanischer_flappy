@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flappy Bird</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      overflow: hidden;
+      background: skyblue;
+      font-family: sans-serif;
+    }
+
+    canvas {
+      display: block;
+      margin: auto;
+      background: linear-gradient(to bottom, #87CEEB, #ffffff);
+      border: 3px solid #333;
+      border-radius: 10px;
+    }
+
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 24px;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 1px 1px 2px #000;
+    }
+  </style>
+</head>
+<body>
+  <div id="score">Punkte: 0</div>
+  <canvas id="gameCanvas" width="320" height="480"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const bg = new Image();
+    bg.src = "https://i.ebayimg.com/images/g/LJ8AAOSwfVpYo5VP/s-l1600.jpg";
+    const ctx = canvas.getContext("2d");
+    const scoreDisplay = document.getElementById("score");
+
+    let highscore = 0;
+
+    let bird = {
+      x: 50,
+      y: 150,
+      width: 20,
+      height: 20,
+      gravity: 0.6,
+      lift: -7,
+      velocity: 0
+    };
+
+    let pipes = [];
+    let score = 0;
+    let gameOver = false;
+
+    function drawBird() {
+      ctx.fillStyle = "yellow";
+      ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
+    }
+
+    function drawPipe(pipe) {
+      ctx.fillStyle = "green";
+      ctx.fillRect(pipe.x, 0, pipe.width, pipe.top);
+      ctx.fillRect(pipe.x, pipe.bottom, pipe.width, canvas.height - pipe.bottom);
+    }
+
+    function createPipe() {
+      let gap = 100;
+      let top = Math.floor(Math.random() * (canvas.height - gap - 60)) + 30;
+      let bottom = top + gap;
+
+      pipes.push({
+        x: canvas.width,
+        width: 50,
+        top: top,
+        bottom: bottom
+      });
+    }
+
+    function update() {
+      if (gameOver) return;
+
+      bird.velocity += bird.gravity;
+      bird.y += bird.velocity;
+
+      if (bird.y + bird.height > canvas.height || bird.y < 0) {
+        gameOver = true;
+      }
+
+      // Update pipes
+      for (let i = pipes.length - 1; i >= 0; i--) {
+        let p = pipes[i];
+        p.x -= 2;
+
+        // Kollision
+        if (
+          bird.x < p.x + p.width &&
+          bird.x + bird.width > p.x &&
+          (bird.y < p.top || bird.y + bird.height > p.bottom)
+        ) {
+          gameOver = true;
+        }
+
+        // Punkte zählen
+        if (p.x + p.width === bird.x) {
+          score++;
+
+          if (score > highscore) {
+            highscore = score;
+          }
+
+          scoreDisplay.textContent = "Punkte: " + score;
+        }
+
+        // Entferne Pipes außerhalb des Bildschirms
+        if (p.x + p.width < 0) {
+          pipes.splice(i, 1);
+        }
+      }
+    }
+
+function draw() {
+  ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+  
+  drawBird();
+  pipes.forEach(drawPipe);
+
+  if (gameOver) {
+    ctx.fillStyle = "yellow";
+    ctx.font = "22px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Highscore: " + highscore, 10, 30);
+
+    ctx.fillText("Du bist richtig schlecht,", canvas.width / 2, 200);
+    ctx.fillText("du Opfer – Hup qije nonen", canvas.width / 2, 230);
+
+    ctx.font = "16px Arial";
+    ctx.fillText("Marrja Zotit – se nuk din me lujt hiq", canvas.width / 2, 270);
+    ctx.font = "14px Arial";
+    ctx.fillText("Zum Neustarten tippen", canvas.width / 2, 310);
+  }
+}
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    // Steuerung (Tippen auf iPhone)
+    function flap() {
+  if (gameOver) {
+    reset();
+    return;
+  }
+  bird.velocity = bird.lift;
+}
+
+window.addEventListener("touchstart", flap);
+
+window.addEventListener("mousedown", flap);
+
+window.addEventListener("keydown", (e) => {
+  if (e.code === "Space") flap();
+});
+
+    setInterval(() => {
+      if (!gameOver) {
+        createPipe();
+      }
+    }, 2000);
+
+    function reset() {
+      bird.y = 150;
+      bird.velocity = 0;
+      pipes = [];
+      score = 0;
+      gameOver = false;
+      scoreDisplay.textContent = "Punkte: 0";
+    }
+
+    loop();
+  </script>
+</body>
+</html>
