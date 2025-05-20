@@ -66,12 +66,58 @@
     .start-button:hover {
       transform: scale(1.1);
     }
+
+    .image-upload {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .image-preview {
+      width: 100px;
+      height: 100px;
+      border: 2px solid white;
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .image-preview img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    #imageUpload {
+      display: none;
+    }
+
+    .upload-button {
+      padding: 8px 16px;
+      background: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
   <div id="score">Punkte: 0</div>
   <div id="startScreen" class="start-screen">
     <h1>Flappy Bird</h1>
+    <div class="image-upload">
+      <div class="image-preview">
+        <img id="preview" src="https://images.pexels.com/photos/2683946/pexels-photo-2683946.jpeg?auto=compress&cs=tinysrgb&w=50" alt="Standardbild">
+      </div>
+      <input type="file" id="imageUpload" accept="image/*">
+      <button class="upload-button" onclick="document.getElementById('imageUpload').click()">Bild auswählen</button>
+    </div>
     <p>Tippe um zu fliegen</p>
     <button class="start-button" onclick="startGame()">Spiel starten</button>
   </div>
@@ -80,19 +126,34 @@
   <script>
     const canvas = document.getElementById("gameCanvas");
     const bg = new Image();
-    bg.src = "https://image.spreadshirtmedia.net/image-server/v1/compositions/T1049A741PA3759PT17X0Y0D157612303W24869H29843/views/1,width=550,height=550,appearanceId=741,backgroundColor=761F32,noPt=true/albanien-flagge-adler-doppeladler-wappen-tirana-kissenhuelle.jpg";
+    bg.src = "https://i.ebayimg.com/images/g/LJ8AAOSwfVpYo5VP/s-l1600.jpg";
     const ctx = canvas.getContext("2d");
     const scoreDisplay = document.getElementById("score");
     const startScreen = document.getElementById("startScreen");
+    const imageUpload = document.getElementById('imageUpload');
+    const preview = document.getElementById('preview');
 
     // Audio-Elemente
     const flapSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2/2648/2648.wav");
     const crashSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2/2620/2620.wav");
     const scoreSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2/2650/2650.wav");
 
-    // Vogel-Animation
+    // Vogel-Sprite (wird durch Upload ersetzt)
     const birdSprite = new Image();
-    birdSprite.src = "https://raw.githubusercontent.com/sourabhv/FlapPyBird/master/assets/sprites/redbird-midflap.png";
+    birdSprite.src = preview.src;
+
+    // Bild-Upload Handler
+    imageUpload.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          preview.src = e.target.result;
+          birdSprite.src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+      }
+    });
 
     // Wolken
     let clouds = [];
@@ -134,7 +195,7 @@
 
     function drawParticles() {
       particles.forEach(p => {
-        ctx.fillStyle = `rgba(255, 255, 0, ${p.life})`;
+        ctx.fillStyle = `rgba(139, 69, 19, ${p.life})`; // Braune Farbe für Federn
         ctx.beginPath();
         ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
         ctx.fill();
@@ -170,8 +231,8 @@
     let bird = {
       x: 50,
       y: 150,
-      width: 34,
-      height: 24,
+      width: 50,
+      height: 40,
       gravity: 0.6,
       lift: -7,
       velocity: 0,
@@ -223,7 +284,7 @@
     }
 
     function createPipe() {
-      let gap = 100;
+      let gap = 120;
       let top = Math.floor(Math.random() * (canvas.height - gap - 60)) + 30;
       let bottom = top + gap;
 
@@ -303,15 +364,14 @@
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         ctx.fillStyle = "white";
-        ctx.font = "20px Arial";
+        ctx.font = "22px Arial";
         ctx.textAlign = "center";
-        ctx.fillText("Shum i dopt je, lass mal deine Filme", canvas.width / 2, 150);
-        ctx.fillText("Hup qije nonen bre pis", canvas.width / 2, 180);
-        ctx.fillText("Highscore: " + highscore, canvas.width / 2, 220);
-        ctx.fillText("Punkte: " + score, canvas.width / 2, 260);
+        ctx.fillText("Game Over!", canvas.width / 2, 150);
+        ctx.fillText("Highscore: " + highscore, canvas.width / 2, 190);
+        ctx.fillText("Punkte: " + score, canvas.width / 2, 230);
         
         ctx.font = "16px Arial";
-        ctx.fillText("Zum Neustarten tippen", canvas.width / 2, 290);
+        ctx.fillText("Zum Neustarten tippen", canvas.width / 2, 270);
       }
     }
     
