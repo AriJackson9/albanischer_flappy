@@ -50,9 +50,6 @@
       flex-direction: column;
       align-items: center;
       gap: 20px;
-      background: rgba(0, 0, 0, 0.5);
-      padding: 20px;
-      border-radius: 10px;
     }
 
     .start-button {
@@ -76,27 +73,26 @@
   <div id="startScreen" class="start-screen">
     <h1>Flappy Bird</h1>
     <p>Tippe um zu fliegen</p>
-    <button id="startButton" class="start-button">Spiel starten</button>
+    <button class="start-button" onclick="startGame()">Spiel starten</button>
   </div>
   <canvas id="gameCanvas" width="320" height="480"></canvas>
 
   <script>
     const canvas = document.getElementById("gameCanvas");
     const bg = new Image();
-    bg.src = "https://i.ebayimg.com/images/g/LJ8AAOSwfVpYo5VP/s-l1600.jpg";
+    bg.src = "https://image.spreadshirtmedia.net/image-server/v1/compositions/T1049A741PA3759PT17X0Y0D157612303W24869H29843/views/1,width=550,height=550,appearanceId=741,backgroundColor=761F32,noPt=true/albanien-flagge-adler-doppeladler-wappen-tirana-kissenhuelle.jpg";
     const ctx = canvas.getContext("2d");
     const scoreDisplay = document.getElementById("score");
     const startScreen = document.getElementById("startScreen");
-    const startButton = document.getElementById('startButton');
 
     // Audio-Elemente
     const flapSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2/2648/2648.wav");
     const crashSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2/2620/2620.wav");
     const scoreSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2/2650/2650.wav");
 
-    // Vogel-Sprite
+    // Vogel-Animation
     const birdSprite = new Image();
-    birdSprite.src = "https://images.pexels.com/photos/2683946/pexels-photo-2683946.jpeg?auto=compress&cs=tinysrgb&w=100";
+    birdSprite.src = "https://raw.githubusercontent.com/sourabhv/FlapPyBird/master/assets/sprites/redbird-midflap.png";
 
     // Wolken
     let clouds = [];
@@ -138,7 +134,7 @@
 
     function drawParticles() {
       particles.forEach(p => {
-        ctx.fillStyle = `rgba(139, 69, 19, ${p.life})`; // Braune Farbe für Federn
+        ctx.fillStyle = `rgba(255, 255, 0, ${p.life})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
         ctx.fill();
@@ -174,8 +170,8 @@
     let bird = {
       x: 50,
       y: 150,
-      width: 50,
-      height: 40,
+      width: 34,
+      height: 24,
       gravity: 0.6,
       lift: -7,
       velocity: 0,
@@ -227,7 +223,7 @@
     }
 
     function createPipe() {
-      let gap = 120;
+      let gap = 100;
       let top = Math.floor(Math.random() * (canvas.height - gap - 60)) + 30;
       let bottom = top + gap;
 
@@ -307,14 +303,15 @@
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         ctx.fillStyle = "white";
-        ctx.font = "22px Arial";
+        ctx.font = "20px Arial";
         ctx.textAlign = "center";
-        ctx.fillText("Game Over!", canvas.width / 2, 150);
-        ctx.fillText("Highscore: " + highscore, canvas.width / 2, 190);
-        ctx.fillText("Punkte: " + score, canvas.width / 2, 230);
+        ctx.fillText("Shum i dopt je, lass mal deine Filme", canvas.width / 2, 150);
+        ctx.fillText("Hup qije nonen bre pis", canvas.width / 2, 180);
+        ctx.fillText("Highscore: " + highscore, canvas.width / 2, 220);
+        ctx.fillText("Punkte: " + score, canvas.width / 2, 260);
         
         ctx.font = "16px Arial";
-        ctx.fillText("Zum Neustarten tippen", canvas.width / 2, 270);
+        ctx.fillText("Zum Neustarten tippen", canvas.width / 2, 290);
       }
     }
     
@@ -332,6 +329,7 @@
 
     function flap() {
       if (!gameStarted) {
+        startGame();
         return;
       }
       
@@ -345,33 +343,15 @@
       flapSound.play();
     }
 
-    startButton.addEventListener('click', startGame);
-
     window.addEventListener("touchstart", function(e) {
       e.preventDefault();
-      if (!gameStarted) {
-        startGame();
-      } else {
-        flap();
-      }
+      flap();
     }, { passive: false });
 
-    window.addEventListener("mousedown", function(e) {
-      if (!gameStarted) {
-        startGame();
-      } else {
-        flap();
-      }
-    });
+    window.addEventListener("mousedown", flap);
 
     window.addEventListener("keydown", (e) => {
-      if (e.code === "Space") {
-        if (!gameStarted) {
-          startGame();
-        } else {
-          flap();
-        }
-      }
+      if (e.code === "Space") flap();
     });
 
     setInterval(() => {
