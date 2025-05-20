@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>Flappy Bird</title>
   <style>
     * {
@@ -15,6 +15,7 @@
       overflow: hidden;
       background: skyblue;
       font-family: sans-serif;
+      touch-action: manipulation;
     }
 
     canvas {
@@ -23,6 +24,7 @@
       background: linear-gradient(to bottom, #87CEEB, #ffffff);
       border: 3px solid #333;
       border-radius: 10px;
+      touch-action: manipulation;
     }
 
     #score {
@@ -48,6 +50,30 @@
     const ctx = canvas.getContext("2d");
     const scoreDisplay = document.getElementById("score");
 
+    // Anpassen der Canvas-Größe an den Viewport
+    function resizeCanvas() {
+      const maxHeight = window.innerHeight - 20;
+      const maxWidth = window.innerWidth - 20;
+      const aspectRatio = 480 / 320;
+      
+      let newWidth, newHeight;
+      
+      if (maxHeight / maxWidth > aspectRatio) {
+        newWidth = maxWidth;
+        newHeight = newWidth * aspectRatio;
+      } else {
+        newHeight = maxHeight;
+        newWidth = newHeight / aspectRatio;
+      }
+      
+      canvas.style.width = newWidth + 'px';
+      canvas.style.height = newHeight + 'px';
+    }
+    
+    // Canvas beim Laden und Resize anpassen
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('load', resizeCanvas);
+    
     let highscore = 0;
 
     let bird = {
@@ -130,27 +156,28 @@
       }
     }
 
-function draw() {
-  ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
-  
-  drawBird();
-  pipes.forEach(drawPipe);
+    function draw() {
+      ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+      
+      drawBird();
+      pipes.forEach(drawPipe);
 
-  if (gameOver) {
-    ctx.fillStyle = "yellow";
-    ctx.font = "22px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("Highscore: " + highscore, 10, 30);
+      if (gameOver) {
+        ctx.fillStyle = "yellow";
+        ctx.font = "22px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Highscore: " + highscore, canvas.width / 2, 30);
 
-    ctx.fillText("Du bist richtig schlecht,", canvas.width / 2, 200);
-    ctx.fillText("du Opfer – Hup qije nonen", canvas.width / 2, 230);
+        ctx.fillText("Du bist richtig schlecht,", canvas.width / 2, 200);
+        ctx.fillText("du Opfer – Hup qije nonen", canvas.width / 2, 230);
 
-    ctx.font = "16px Arial";
-    ctx.fillText("Marrja Zotit – se nuk din me lujt hiq", canvas.width / 2, 270);
-    ctx.font = "14px Arial";
-    ctx.fillText("Zum Neustarten tippen", canvas.width / 2, 310);
-  }
-}
+        ctx.font = "16px Arial";
+        ctx.fillText("Marrja Zotit – se nuk din me lujt hiq", canvas.width / 2, 270);
+        ctx.font = "14px Arial";
+        ctx.fillText("Zum Neustarten tippen", canvas.width / 2, 310);
+      }
+    }
+    
     function loop() {
       update();
       draw();
@@ -159,20 +186,24 @@ function draw() {
 
     // Steuerung (Tippen auf iPhone)
     function flap() {
-  if (gameOver) {
-    reset();
-    return;
-  }
-  bird.velocity = bird.lift;
-}
+      if (gameOver) {
+        reset();
+        return;
+      }
+      bird.velocity = bird.lift;
+    }
 
-window.addEventListener("touchstart", flap);
+    // Verbesserte Touch-Ereignisse für mobile Geräte
+    window.addEventListener("touchstart", function(e) {
+      e.preventDefault();
+      flap();
+    }, { passive: false });
 
-window.addEventListener("mousedown", flap);
+    window.addEventListener("mousedown", flap);
 
-window.addEventListener("keydown", (e) => {
-  if (e.code === "Space") flap();
-});
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space") flap();
+    });
 
     setInterval(() => {
       if (!gameOver) {
