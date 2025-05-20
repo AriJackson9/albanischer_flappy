@@ -69,59 +69,12 @@
     .start-button:hover {
       transform: scale(1.1);
     }
-
-    .image-upload {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .image-preview {
-      width: 100px;
-      height: 100px;
-      border: 2px solid white;
-      border-radius: 10px;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    .image-preview img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-    }
-
-    #imageUpload {
-      display: none;
-    }
-
-    .upload-button {
-      padding: 8px 16px;
-      background: #2196F3;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 16px;
-      margin-top: 10px;
-    }
   </style>
 </head>
 <body>
   <div id="score">Punkte: 0</div>
   <div id="startScreen" class="start-screen">
     <h1>Flappy Bird</h1>
-    <div class="image-upload">
-      <div class="image-preview">
-        <img id="preview" src="https://images.pexels.com/photos/2683946/pexels-photo-2683946.jpeg?auto=compress&cs=tinysrgb&w=50" alt="Standardbild">
-      </div>
-      <input type="file" id="imageUpload" accept="image/*">
-      <button class="upload-button" onclick="document.getElementById('imageUpload').click()">Bild auswählen</button>
-    </div>
     <p>Tippe um zu fliegen</p>
     <button id="startButton" class="start-button">Spiel starten</button>
   </div>
@@ -134,8 +87,6 @@
     const ctx = canvas.getContext("2d");
     const scoreDisplay = document.getElementById("score");
     const startScreen = document.getElementById("startScreen");
-    const imageUpload = document.getElementById('imageUpload');
-    const preview = document.getElementById('preview');
     const startButton = document.getElementById('startButton');
 
     // Audio-Elemente
@@ -143,22 +94,9 @@
     const crashSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2/2620/2620.wav");
     const scoreSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2/2650/2650.wav");
 
-    // Vogel-Sprite (wird durch Upload ersetzt)
+    // Vogel-Sprite
     const birdSprite = new Image();
-    birdSprite.src = preview.src;
-
-    // Bild-Upload Handler
-    imageUpload.addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          preview.src = e.target.result;
-          birdSprite.src = e.target.result;
-        }
-        reader.readAsDataURL(file);
-      }
-    });
+    birdSprite.src = "https://images.pexels.com/photos/2683946/pexels-photo-2683946.jpeg?auto=compress&cs=tinysrgb&w=100";
 
     // Wolken
     let clouds = [];
@@ -392,8 +330,6 @@
       reset();
     }
 
-    startButton.addEventListener('click', startGame);
-
     function flap() {
       if (!gameStarted) {
         return;
@@ -408,6 +344,8 @@
       flapSound.currentTime = 0;
       flapSound.play();
     }
+
+    startButton.addEventListener('click', startGame);
 
     window.addEventListener("touchstart", function(e) {
       e.preventDefault();
