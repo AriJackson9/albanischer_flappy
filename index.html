@@ -37,18 +37,109 @@
       color: #fff;
       text-shadow: 1px 1px 2px #000;
     }
+
+    .start-screen {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .start-button {
+      padding: 10px 20px;
+      font-size: 20px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .start-button:hover {
+      transform: scale(1.1);
+    }
   </style>
 </head>
 <body>
   <div id="score">Punkte: 0</div>
+  <div id="startScreen" class="start-screen">
+    <h1>Flappy Bird</h1>
+    <p>Tippe um zu fliegen</p>
+    <button class="start-button" onclick="startGame()">Spiel starten</button>
+  </div>
   <canvas id="gameCanvas" width="320" height="480"></canvas>
 
   <script>
     const canvas = document.getElementById("gameCanvas");
     const bg = new Image();
-    bg.src = "https://i.ebayimg.com/images/g/LJ8AAOSwfVpYo5VP/s-l1600.jpg";
+    bg.src = "https://image.spreadshirtmedia.net/image-server/v1/compositions/T1049A741PA3759PT17X0Y0D157612303W24869H29843/views/1,width=550,height=550,appearanceId=741,backgroundColor=761F32,noPt=true/albanien-flagge-adler-doppeladler-wappen-tirana-kissenhuelle.jpg";
     const ctx = canvas.getContext("2d");
     const scoreDisplay = document.getElementById("score");
+    const startScreen = document.getElementById("startScreen");
+
+    // Audio-Elemente
+    const flapSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2/2648/2648.wav");
+    const crashSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2/2620/2620.wav");
+    const scoreSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2/2650/2650.wav");
+
+    // Vogel-Animation
+    const birdSprite = new Image();
+    birdSprite.src = "https://raw.githubusercontent.com/sourabhv/FlapPyBird/master/assets/sprites/redbird-midflap.png";
+
+    // Wolken
+    let clouds = [];
+    for(let i = 0; i < 3; i++) {
+      clouds.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * (canvas.height/2),
+        speed: 0.5 + Math.random(),
+        width: 60 + Math.random() * 40
+      });
+    }
+
+    // Partikel-System
+    let particles = [];
+
+    function createParticles(x, y) {
+      for(let i = 0; i < 20; i++) {
+        particles.push({
+          x: x,
+          y: y,
+          vx: (Math.random() - 0.5) * 5,
+          vy: (Math.random() - 0.5) * 5,
+          life: 1
+        });
+      }
+    }
+
+    function updateParticles() {
+      for(let i = particles.length - 1; i >= 0; i--) {
+        particles[i].x += particles[i].vx;
+        particles[i].y += particles[i].vy;
+        particles[i].life -= 0.02;
+        
+        if(particles[i].life <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+    }
+
+    function drawParticles() {
+      particles.forEach(p => {
+        ctx.fillStyle = `rgba(255, 255, 0, ${p.life})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
 
     // Anpassen der Canvas-Größe an den Viewport
     function resizeCanvas() {
@@ -70,20 +161,21 @@
       canvas.style.height = newHeight + 'px';
     }
     
-    // Canvas beim Laden und Resize anpassen
     window.addEventListener('resize', resizeCanvas);
     window.addEventListener('load', resizeCanvas);
     
     let highscore = 0;
+    let gameStarted = false;
 
     let bird = {
       x: 50,
       y: 150,
-      width: 20,
-      height: 20,
+      width: 34,
+      height: 24,
       gravity: 0.6,
       lift: -7,
-      velocity: 0
+      velocity: 0,
+      rotation: 0
     };
 
     let pipes = [];
@@ -91,14 +183,43 @@
     let gameOver = false;
 
     function drawBird() {
-      ctx.fillStyle = "yellow";
-      ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
+      ctx.save();
+      ctx.translate(bird.x + bird.width/2, bird.y + bird.height/2);
+      bird.rotation = Math.min(Math.PI/4, Math.max(-Math.PI/4, bird.velocity * 0.1));
+      ctx.rotate(bird.rotation);
+      ctx.drawImage(birdSprite, -bird.width/2, -bird.height/2, bird.width, bird.height);
+      ctx.restore();
+    }
+
+    function drawClouds() {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+      clouds.forEach(cloud => {
+        ctx.beginPath();
+        ctx.arc(cloud.x, cloud.y, cloud.width/2, 0, Math.PI * 2);
+        ctx.arc(cloud.x + cloud.width/3, cloud.y - 10, cloud.width/3, 0, Math.PI * 2);
+        ctx.arc(cloud.x + cloud.width/2, cloud.y + 5, cloud.width/3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        cloud.x -= cloud.speed;
+        if(cloud.x + cloud.width < 0) {
+          cloud.x = canvas.width + cloud.width;
+          cloud.y = Math.random() * (canvas.height/2);
+        }
+      });
     }
 
     function drawPipe(pipe) {
       ctx.fillStyle = "green";
+      // Oberes Rohr mit Rand
       ctx.fillRect(pipe.x, 0, pipe.width, pipe.top);
+      ctx.fillStyle = "#2d5a27";
+      ctx.fillRect(pipe.x + pipe.width - 10, 0, 10, pipe.top);
+      
+      // Unteres Rohr mit Rand
+      ctx.fillStyle = "green";
       ctx.fillRect(pipe.x, pipe.bottom, pipe.width, canvas.height - pipe.bottom);
+      ctx.fillStyle = "#2d5a27";
+      ctx.fillRect(pipe.x + pipe.width - 10, pipe.bottom, 10, canvas.height - pipe.bottom);
     }
 
     function createPipe() {
@@ -115,13 +236,15 @@
     }
 
     function update() {
-      if (gameOver) return;
+      if (!gameStarted || gameOver) return;
 
       bird.velocity += bird.gravity;
       bird.y += bird.velocity;
 
       if (bird.y + bird.height > canvas.height || bird.y < 0) {
         gameOver = true;
+        crashSound.play();
+        createParticles(bird.x, bird.y);
       }
 
       // Update pipes
@@ -136,11 +259,14 @@
           (bird.y < p.top || bird.y + bird.height > p.bottom)
         ) {
           gameOver = true;
+          crashSound.play();
+          createParticles(bird.x, bird.y);
         }
 
         // Punkte zählen
         if (p.x + p.width === bird.x) {
           score++;
+          scoreSound.play();
 
           if (score > highscore) {
             highscore = score;
@@ -154,27 +280,37 @@
           pipes.splice(i, 1);
         }
       }
+
+      updateParticles();
     }
 
     function draw() {
       ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
       
+      drawClouds();
       drawBird();
       pipes.forEach(drawPipe);
+      drawParticles();
+
+      if (!gameStarted) {
+        startScreen.style.display = "flex";
+      } else {
+        startScreen.style.display = "none";
+      }
 
       if (gameOver) {
-        ctx.fillStyle = "yellow";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = "white";
         ctx.font = "22px Arial";
         ctx.textAlign = "center";
-        ctx.fillText("Highscore: " + highscore, canvas.width / 2, 30);
-
-        ctx.fillText("Du bist richtig schlecht,", canvas.width / 2, 200);
-        ctx.fillText("du Opfer – Hup qije nonen", canvas.width / 2, 230);
-
+        ctx.fillText("Game Over!", canvas.width / 2, 150);
+        ctx.fillText("Highscore: " + highscore, canvas.width / 2, 190);
+        ctx.fillText("Punkte: " + score, canvas.width / 2, 230);
+        
         ctx.font = "16px Arial";
-        ctx.fillText("Marrja Zotit – se nuk din me lujt hiq", canvas.width / 2, 270);
-        ctx.font = "14px Arial";
-        ctx.fillText("Zum Neustarten tippen", canvas.width / 2, 310);
+        ctx.fillText("Zum Neustarten tippen", canvas.width / 2, 270);
       }
     }
     
@@ -184,16 +320,28 @@
       requestAnimationFrame(loop);
     }
 
-    // Steuerung (Tippen auf iPhone)
+    function startGame() {
+      gameStarted = true;
+      gameOver = false;
+      reset();
+    }
+
     function flap() {
+      if (!gameStarted) {
+        startGame();
+        return;
+      }
+      
       if (gameOver) {
         reset();
         return;
       }
+      
       bird.velocity = bird.lift;
+      flapSound.currentTime = 0;
+      flapSound.play();
     }
 
-    // Verbesserte Touch-Ereignisse für mobile Geräte
     window.addEventListener("touchstart", function(e) {
       e.preventDefault();
       flap();
@@ -206,7 +354,7 @@
     });
 
     setInterval(() => {
-      if (!gameOver) {
+      if (!gameOver && gameStarted) {
         createPipe();
       }
     }, 2000);
@@ -217,6 +365,7 @@
       pipes = [];
       score = 0;
       gameOver = false;
+      particles = [];
       scoreDisplay.textContent = "Punkte: 0";
     }
 
