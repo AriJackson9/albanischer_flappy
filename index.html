@@ -50,6 +50,9 @@
       flex-direction: column;
       align-items: center;
       gap: 20px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 20px;
+      border-radius: 10px;
     }
 
     .start-button {
@@ -104,6 +107,7 @@
       border-radius: 5px;
       cursor: pointer;
       font-size: 16px;
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -119,7 +123,7 @@
       <button class="upload-button" onclick="document.getElementById('imageUpload').click()">Bild auswählen</button>
     </div>
     <p>Tippe um zu fliegen</p>
-    <button class="start-button" onclick="startGame()">Spiel starten</button>
+    <button id="startButton" class="start-button">Spiel starten</button>
   </div>
   <canvas id="gameCanvas" width="320" height="480"></canvas>
 
@@ -132,6 +136,7 @@
     const startScreen = document.getElementById("startScreen");
     const imageUpload = document.getElementById('imageUpload');
     const preview = document.getElementById('preview');
+    const startButton = document.getElementById('startButton');
 
     // Audio-Elemente
     const flapSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2/2648/2648.wav");
@@ -387,9 +392,10 @@
       reset();
     }
 
+    startButton.addEventListener('click', startGame);
+
     function flap() {
       if (!gameStarted) {
-        startGame();
         return;
       }
       
@@ -405,13 +411,29 @@
 
     window.addEventListener("touchstart", function(e) {
       e.preventDefault();
-      flap();
+      if (!gameStarted) {
+        startGame();
+      } else {
+        flap();
+      }
     }, { passive: false });
 
-    window.addEventListener("mousedown", flap);
+    window.addEventListener("mousedown", function(e) {
+      if (!gameStarted) {
+        startGame();
+      } else {
+        flap();
+      }
+    });
 
     window.addEventListener("keydown", (e) => {
-      if (e.code === "Space") flap();
+      if (e.code === "Space") {
+        if (!gameStarted) {
+          startGame();
+        } else {
+          flap();
+        }
+      }
     });
 
     setInterval(() => {
