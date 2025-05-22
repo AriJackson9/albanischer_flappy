@@ -60,7 +60,8 @@
       padding: 30px;
       border-radius: 15px;
       z-index: 1000;
-      pointer-events: auto;
+      width: 90%;
+      max-width: 400px;
     }
 
     .name-input {
@@ -68,11 +69,14 @@
       font-size: 18px;
       border: 2px solid #4CAF50;
       border-radius: 5px;
-      width: 200px;
+      width: 80%;
       text-align: center;
       background: white;
       color: #333;
       outline: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
     }
 
     .name-input:focus {
@@ -89,6 +93,7 @@
       border-radius: 5px;
       cursor: pointer;
       transition: transform 0.2s;
+      width: 80%;
     }
 
     .start-button:hover {
@@ -126,6 +131,11 @@
     const playerNameInput = document.getElementById("playerName");
     let playerName = "";
 
+    // Verhindern, dass Touch-Events das Spiel starten, wenn das Eingabefeld fokussiert ist
+    playerNameInput.addEventListener('touchstart', function(e) {
+      e.stopPropagation();
+    });
+
     playerNameInput.addEventListener('input', function() {
       startButton.disabled = !this.value.trim();
     });
@@ -139,7 +149,6 @@
     const birdSprite = new Image();
     birdSprite.src = "https://raw.githubusercontent.com/sourabhv/FlapPyBird/master/assets/sprites/redbird-midflap.png";
 
-    // Wolken
     let clouds = [];
     for(let i = 0; i < 3; i++) {
       clouds.push({
@@ -380,15 +389,19 @@
     }
 
     window.addEventListener("touchstart", function(e) {
-      e.preventDefault();
-      if (gameStarted) {
-        flap();
+      if (!e.target.closest('.start-screen')) {
+        e.preventDefault();
+        if (gameStarted) {
+          flap();
+        }
       }
     }, { passive: false });
 
     window.addEventListener("mousedown", function(e) {
-      if (gameStarted) {
-        flap();
+      if (!e.target.closest('.start-screen')) {
+        if (gameStarted) {
+          flap();
+        }
       }
     });
 
