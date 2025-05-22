@@ -149,6 +149,10 @@
     const birdSprite = new Image();
     birdSprite.src = "https://raw.githubusercontent.com/sourabhv/FlapPyBird/master/assets/sprites/redbird-midflap.png";
 
+    // Pipe Image
+    const pipeImage = new Image();
+    pipeImage.src = "https://ih1.redbubble.net/image.2408251047.6806/flat,750x,075,f-pad,750x1000,f8f8f8.jpg";
+
     let clouds = [];
     for(let i = 0; i < 3; i++) {
       clouds.push({
@@ -249,17 +253,14 @@
     }
 
     function drawPipe(pipe) {
-      ctx.fillStyle = "green";
-      // Oberes Rohr mit Rand
-      ctx.fillRect(pipe.x, 0, pipe.width, pipe.top);
-      ctx.fillStyle = "#2d5a27";
-      ctx.fillRect(pipe.x + pipe.width - 10, 0, 10, pipe.top);
+      // Oberes Rohr
+      ctx.save();
+      ctx.scale(1, -1); // Flip vertically for top pipe
+      ctx.drawImage(pipeImage, pipe.x, -pipe.top, pipe.width, pipe.top);
+      ctx.restore();
       
-      // Unteres Rohr mit Rand
-      ctx.fillStyle = "green";
-      ctx.fillRect(pipe.x, pipe.bottom, pipe.width, canvas.height - pipe.bottom);
-      ctx.fillStyle = "#2d5a27";
-      ctx.fillRect(pipe.x + pipe.width - 10, pipe.bottom, 10, canvas.height - pipe.bottom);
+      // Unteres Rohr
+      ctx.drawImage(pipeImage, pipe.x, pipe.bottom, pipe.width, canvas.height - pipe.bottom);
     }
 
     function createPipe() {
