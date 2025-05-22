@@ -16,19 +16,21 @@
       background: skyblue;
       font-family: sans-serif;
       touch-action: manipulation;
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
     }
 
     canvas {
       display: block;
-      margin: auto;
+      width: 100vw !important;
+      height: 100vh !important;
       background: linear-gradient(to bottom, #87CEEB, #ffffff);
-      border: 3px solid #333;
-      border-radius: 10px;
       touch-action: manipulation;
     }
 
     #score {
-      position: absolute;
+      position: fixed;
       top: 10px;
       left: 50%;
       transform: translateX(-50%);
@@ -36,10 +38,11 @@
       font-weight: bold;
       color: #fff;
       text-shadow: 1px 1px 2px #000;
+      z-index: 10;
     }
 
     .start-screen {
-      position: absolute;
+      position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
@@ -50,6 +53,19 @@
       flex-direction: column;
       align-items: center;
       gap: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 30px;
+      border-radius: 15px;
+      z-index: 100;
+    }
+
+    .name-input {
+      padding: 10px;
+      font-size: 18px;
+      border: none;
+      border-radius: 5px;
+      width: 200px;
+      text-align: center;
     }
 
     .start-button {
@@ -66,24 +82,40 @@
     .start-button:hover {
       transform: scale(1.1);
     }
+
+    .start-button:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
   <div id="score">Punkte: 0</div>
   <div id="startScreen" class="start-screen">
     <h1>Flappy Bird</h1>
+    <input type="text" id="playerName" class="name-input" placeholder="Dein Name" maxlength="20">
     <p>Tippe um zu fliegen</p>
-    <button class="start-button" onclick="startGame()">Spiel starten</button>
+    <button id="startButton" class="start-button" disabled>Spiel starten</button>
   </div>
-  <canvas id="gameCanvas" width="320" height="480"></canvas>
+  <canvas id="gameCanvas"></canvas>
 
   <script>
     const canvas = document.getElementById("gameCanvas");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
     const bg = new Image();
     bg.src = "https://image.spreadshirtmedia.net/image-server/v1/compositions/T1049A741PA3759PT17X0Y0D157612303W24869H29843/views/1,width=550,height=550,appearanceId=741,backgroundColor=761F32,noPt=true/albanien-flagge-adler-doppeladler-wappen-tirana-kissenhuelle.jpg";
     const ctx = canvas.getContext("2d");
     const scoreDisplay = document.getElementById("score");
     const startScreen = document.getElementById("startScreen");
+    const startButton = document.getElementById("startButton");
+    const playerNameInput = document.getElementById("playerName");
+    let playerName = "";
+
+    playerNameInput.addEventListener('input', function() {
+      startButton.disabled = !this.value.trim();
+    });
 
     // Audio-Elemente
     const flapSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2/2648/2648.wav");
@@ -143,22 +175,8 @@
 
     // Anpassen der Canvas-Größe an den Viewport
     function resizeCanvas() {
-      const maxHeight = window.innerHeight - 20;
-      const maxWidth = window.innerWidth - 20;
-      const aspectRatio = 480 / 320;
-      
-      let newWidth, newHeight;
-      
-      if (maxHeight / maxWidth > aspectRatio) {
-        newWidth = maxWidth;
-        newHeight = newWidth * aspectRatio;
-      } else {
-        newHeight = maxHeight;
-        newWidth = newHeight / aspectRatio;
-      }
-      
-      canvas.style.width = newWidth + 'px';
-      canvas.style.height = newHeight + 'px';
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     }
     
     window.addEventListener('resize', resizeCanvas);
@@ -305,13 +323,14 @@
         ctx.fillStyle = "white";
         ctx.font = "20px Arial";
         ctx.textAlign = "center";
-        ctx.fillText("Shum i dopt je, lass mal deine Filme", canvas.width / 2, 150);
-        ctx.fillText("Hup qije nonen bre pis", canvas.width / 2, 180);
-        ctx.fillText("Highscore: " + highscore, canvas.width / 2, 220);
-        ctx.fillText("Punkte: " + score, canvas.width / 2, 260);
+        ctx.fillText(`Game Over, ${playerName}!`, canvas.width / 2, 150);
+        ctx.fillText("Shum i dopt je, lass mal deine Filme", canvas.width / 2, 180);
+        ctx.fillText("Hup qije nonen bre pis", canvas.width / 2, 210);
+        ctx.fillText("Highscore: " + highscore, canvas.width / 2, 250);
+        ctx.fillText("Punkte: " + score, canvas.width / 2, 280);
         
         ctx.font = "16px Arial";
-        ctx.fillText("Zum Neustarten tippen", canvas.width / 2, 290);
+        ctx.fillText("Zum Neustarten tippen", canvas.width / 2, 310);
       }
     }
     
@@ -322,14 +341,18 @@
     }
 
     function startGame() {
+      playerName = playerNameInput.value.trim();
+      if (!playerName) return;
+      
       gameStarted = true;
       gameOver = false;
       reset();
     }
 
+    startButton.addEventListener('click', startGame);
+
     function flap() {
       if (!gameStarted) {
-        startGame();
         return;
       }
       
@@ -345,13 +368,19 @@
 
     window.addEventListener("touchstart", function(e) {
       e.preventDefault();
-      flap();
+      if (gameStarted) {
+        flap();
+      }
     }, { passive: false });
 
-    window.addEventListener("mousedown", flap);
+    window.addEventListener("mousedown", function(e) {
+      if (gameStarted) {
+        flap();
+      }
+    });
 
     window.addEventListener("keydown", (e) => {
-      if (e.code === "Space") flap();
+      if (e.code === "Space" && gameStarted) flap();
     });
 
     setInterval(() => {
@@ -361,7 +390,7 @@
     }, 2000);
 
     function reset() {
-      bird.y = 150;
+      bird.y = canvas.height / 2;
       bird.velocity = 0;
       pipes = [];
       score = 0;
