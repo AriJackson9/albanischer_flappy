@@ -27,6 +27,9 @@
       height: 100vh !important;
       background: linear-gradient(to bottom, #87CEEB, #ffffff);
       touch-action: manipulation;
+      position: absolute;
+      top: 0;
+      left: 0;
     }
 
     #score {
@@ -56,16 +59,25 @@
       background: rgba(0, 0, 0, 0.7);
       padding: 30px;
       border-radius: 15px;
-      z-index: 100;
+      z-index: 1000;
+      pointer-events: auto;
     }
 
     .name-input {
       padding: 10px;
       font-size: 18px;
-      border: none;
+      border: 2px solid #4CAF50;
       border-radius: 5px;
       width: 200px;
       text-align: center;
+      background: white;
+      color: #333;
+      outline: none;
+    }
+
+    .name-input:focus {
+      border-color: #45a049;
+      box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
     }
 
     .start-button {
@@ -86,6 +98,7 @@
     .start-button:disabled {
       background: #cccccc;
       cursor: not-allowed;
+      transform: none;
     }
   </style>
 </head>
@@ -93,7 +106,7 @@
   <div id="score">Punkte: 0</div>
   <div id="startScreen" class="start-screen">
     <h1>Flappy Bird</h1>
-    <input type="text" id="playerName" class="name-input" placeholder="Dein Name" maxlength="20">
+    <input type="text" id="playerName" class="name-input" placeholder="Dein Name" maxlength="20" autocomplete="off">
     <p>Tippe um zu fliegen</p>
     <button id="startButton" class="start-button" disabled>Spiel starten</button>
   </div>
