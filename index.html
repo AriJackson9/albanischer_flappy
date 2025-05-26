@@ -25,7 +25,6 @@
       display: block;
       width: 100vw !important;
       height: 100vh !important;
-      background: linear-gradient(to bottom, #87CEEB, #ffffff);
       touch-action: manipulation;
       position: absolute;
       top: 0;
@@ -84,7 +83,7 @@
       box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
     }
 
-    .start-button {
+    .button {
       padding: 10px 20px;
       font-size: 20px;
       background: #4CAF50;
@@ -94,13 +93,14 @@
       cursor: pointer;
       transition: transform 0.2s;
       width: 80%;
+      margin: 5px 0;
     }
 
-    .start-button:hover {
+    .button:hover {
       transform: scale(1.1);
     }
 
-    .start-button:disabled {
+    .button:disabled {
       background: #cccccc;
       cursor: not-allowed;
       transform: none;
@@ -112,12 +112,11 @@
   <div id="startScreen" class="start-screen">
     <h1>Flappy Bird</h1>
     <input type="text" id="playerName" class="name-input" placeholder="Dein Name" maxlength="20" autocomplete="off">
-    <p>Tippe um zu fliegen</p>
-    <button id="startButton" class="start-button" disabled>Spiel starten</button>
+    <button id="startButton" class="button">Spiel starten</button>
   </div>
   <canvas id="gameCanvas"></canvas>
 
-  <script>
+  <script type="module">
     const canvas = document.getElementById("gameCanvas");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -129,9 +128,9 @@
     const startScreen = document.getElementById("startScreen");
     const startButton = document.getElementById("startButton");
     const playerNameInput = document.getElementById("playerName");
+    
     let playerName = "";
 
-    // Verhindern, dass Touch-Events das Spiel starten, wenn das Eingabefeld fokussiert ist
     playerNameInput.addEventListener('touchstart', function(e) {
       e.stopPropagation();
     });
@@ -140,18 +139,12 @@
       startButton.disabled = !this.value.trim();
     });
 
-    // Audio-Elemente
     const flapSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2/2648/2648.wav");
     const crashSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2/2620/2620.wav");
     const scoreSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2/2650/2650.wav");
 
-    // Vogel-Animation
     const birdSprite = new Image();
     birdSprite.src = "https://raw.githubusercontent.com/sourabhv/FlapPyBird/master/assets/sprites/redbird-midflap.png";
-
-    // Pipe Image
-    const pipeImage = new Image();
-    pipeImage.src = "https://ih1.redbubble.net/image.2408251047.6806/flat,750x,075,f-pad,750x1000,f8f8f8.jpg";
 
     let clouds = [];
     for(let i = 0; i < 3; i++) {
@@ -163,7 +156,6 @@
       });
     }
 
-    // Partikel-System
     let particles = [];
 
     function createParticles(x, y) {
@@ -199,7 +191,6 @@
       });
     }
 
-    // Anpassen der Canvas-Größe an den Viewport
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -226,12 +217,11 @@
     let score = 0;
     let gameOver = false;
 
-    function drawBird() {
+    function drawBird(b) {
       ctx.save();
-      ctx.translate(bird.x + bird.width/2, bird.y + bird.height/2);
-      bird.rotation = Math.min(Math.PI/4, Math.max(-Math.PI/4, bird.velocity * 0.1));
-      ctx.rotate(bird.rotation);
-      ctx.drawImage(birdSprite, -bird.width/2, -bird.height/2, bird.width, bird.height);
+      ctx.translate(b.x + b.width/2, b.y + b.height/2);
+      ctx.rotate(b.rotation);
+      ctx.drawImage(birdSprite, -b.width/2, -b.height/2, b.width, b.height);
       ctx.restore();
     }
 
@@ -253,14 +243,15 @@
     }
 
     function drawPipe(pipe) {
-      // Oberes Rohr
-      ctx.save();
-      ctx.scale(1, -1); // Flip vertically for top pipe
-      ctx.drawImage(pipeImage, pipe.x, -pipe.top, pipe.width, pipe.top);
-      ctx.restore();
+      ctx.fillStyle = "green";
+      ctx.fillRect(pipe.x, 0, pipe.width, pipe.top);
+      ctx.fillStyle = "#2d5a27";
+      ctx.fillRect(pipe.x + pipe.width - 10, 0, 10, pipe.top);
       
-      // Unteres Rohr
-      ctx.drawImage(pipeImage, pipe.x, pipe.bottom, pipe.width, canvas.height - pipe.bottom);
+      ctx.fillStyle = "green";
+      ctx.fillRect(pipe.x, pipe.bottom, pipe.width, canvas.height - pipe.bottom);
+      ctx.fillStyle = "#2d5a27";
+      ctx.fillRect(pipe.x + pipe.width - 10, pipe.bottom, 10, canvas.height - pipe.bottom);
     }
 
     function createPipe() {
@@ -281,6 +272,7 @@
 
       bird.velocity += bird.gravity;
       bird.y += bird.velocity;
+      bird.rotation = Math.min(Math.PI/2, Math.max(-Math.PI/2, bird.velocity * 0.2));
 
       if (bird.y + bird.height > canvas.height || bird.y < 0) {
         gameOver = true;
@@ -288,12 +280,10 @@
         createParticles(bird.x, bird.y);
       }
 
-      // Update pipes
       for (let i = pipes.length - 1; i >= 0; i--) {
         let p = pipes[i];
         p.x -= 2;
 
-        // Kollision
         if (
           bird.x < p.x + p.width &&
           bird.x + bird.width > p.x &&
@@ -304,7 +294,6 @@
           createParticles(bird.x, bird.y);
         }
 
-        // Punkte zählen
         if (p.x + p.width === bird.x) {
           score++;
           scoreSound.play();
@@ -316,7 +305,6 @@
           scoreDisplay.textContent = "Punkte: " + score;
         }
 
-        // Entferne Pipes außerhalb des Bildschirms
         if (p.x + p.width < 0) {
           pipes.splice(i, 1);
         }
@@ -329,7 +317,7 @@
       ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
       
       drawClouds();
-      drawBird();
+      drawBird(bird);
       pipes.forEach(drawPipe);
       drawParticles();
 
